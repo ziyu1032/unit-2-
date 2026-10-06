@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Period 2 - Word Fill Challenge</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: #f2f7f6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .container {
+            max-width: 820px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 36px;
+            padding: 28px 26px 32px;
+            box-shadow: 0 16px 40px rgba(0,40,40,0.07);
+        }
+        h1 { text-align: center; color: #1a4a47; font-size: 2.1rem; letter-spacing: -0.5px; }
+        .subhead { text-align: center; color: #3f6a67; border-bottom: 2px solid #e0ecea; padding-bottom: 12px; margin-bottom: 18px; font-size: 0.95rem; }
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #e6f0ee; border-radius: 40px; padding: 8px 20px; margin-bottom: 22px;
+            font-weight: 600; color: #1a4a47;
+        }
+        .reset-btn {
+            background: #1f6b66; border: none; color: white; padding: 6px 24px;
+            border-radius: 40px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+        }
+        .reset-btn:hover { background: #0e524e; }
+        .question-box {
+            background: #f8fbfa; border-radius: 20px; padding: 22px 24px; margin-bottom: 20px;
+            border-left: 5px solid #3a8a84;
+        }
+        .sentence {
+            font-size: 1.25rem; font-weight: 500; color: #1a3533; line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        .sentence .blank {
+            display: inline-block; min-width: 140px; border-bottom: 3px dashed #3a8a84;
+            color: #0e524e; font-weight: 700; padding: 0 6px;
+        }
+        .context-hint {
+            font-size: 0.9rem; color: #4f6f6c; font-style: italic;
+        }
+        .options {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin: 18px 0 16px;
+        }
+        .opt {
+            background: #fafcfc; padding: 14px 18px; border-radius: 60px;
+            border: 2px solid #d4e3e0; font-size: 1rem; font-weight: 500;
+            color: #1a3a38; cursor: pointer; transition: 0.15s; text-align: center;
+        }
+        .opt:hover:not(.disabled) { border-color: #3a8a84; transform: scale(1.02); }
+        .opt.selected-correct { background: #cfe6d4; border-color: #3b8b6e; color: #1a4d3b; }
+        .opt.selected-wrong { background: #f4d4d0; border-color: #b85c4a; color: #6b2c1f; }
+        .opt.show-correct { background: #cfe6d4; border-color: #3b8b6e; opacity: 0.7; }
+        .opt.disabled { cursor: not-allowed; opacity: 0.5; }
+        .feedback {
+            background: #f3ede6; border-radius: 20px; padding: 16px 20px;
+            min-height: 70px; border-left: 6px solid #b08c6b;
+            font-size: 0.98rem; color: #2d403f; line-height: 1.6; margin-bottom: 16px;
+        }
+        .feedback strong { color: #1a5c58; }
+        .feedback .def { background: #e0ecea; padding: 1px 8px; border-radius: 8px; font-weight: 600; }
+        .next-btn {
+            background: #2a6b65; border: none; color: white; font-size: 1.05rem;
+            font-weight: 600; padding: 14px; border-radius: 60px; width: 100%;
+            cursor: pointer; transition: 0.2s;
+        }
+        .next-btn:hover:not(:disabled) { background: #18524d; }
+        .next-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .result { text-align: center; padding: 20px 0; }
+        .result .big { font-size: 4rem; font-weight: 800; color: #2a6b65; }
+        .result .msg { font-size: 1.15rem; margin: 12px 0 24px; color: #2d403f; }
+        .play-again { background: #3d6b60; border: none; color: white; font-size: 1.05rem;
+            padding: 14px 44px; border-radius: 60px; cursor: pointer; font-weight: 600;
+        }
+        .play-again:hover { background: #26554a; }
+        .hidden { display: none; }
+        @media (max-width: 550px) { .options { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📝 Word Fill Challenge</h1>
+    <div class="subhead">Period 2 · Choose the correct word to complete each sentence</div>
+
+    <div id="gameArea">
+        <div class="top-bar">
+            <span>⭐ Score: <span id="scoreDisplay">0</span> / 100</span>
+            <span>📌 <span id="progressDisplay">1</span> / 10</span>
+            <button class="reset-btn" id="resetBtn">⟳ Restart</button>
+        </div>
+
+        <div class="question-box">
+            <div class="sentence" id="sentenceText">Loading...</div>
+            <div class="context-hint" id="contextHint"></div>
+        </div>
+
+        <div class="options" id="optionsContainer"></div>
+
+        <div class="feedback" id="feedbackArea">
+            💡 Select a word to see its definition and usage.
+        </div>
+
+        <button class="next-btn" id="nextBtn" disabled>Next →</button>
+    </div>
+
+    <div id="resultArea" class="result hidden">
+        <div class="big" id="finalScore">0</div>
+        <div class="msg" id="resultMsg">Great effort!</div>
+        <button class="play-again" id="playAgainBtn">🔄 Play Again</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ----- 题库：10道填空，基于课文内容改编 -----
+        const questions = [
+            {
+                sentence: "Hainan's four leading industries ______ for 67% of the province's GDP in 2024.",
+                blank: "account",
+                options: ["account", "adopt", "adapt", "attach"],
+                correct: 0,
+                definition: "account for = to be the reason for something, or to form a particular part of a total",
+                usage: "Tourism accounts for a large portion of Hainan's economy."
+            },
+            {
+                sentence: "The modern services sector is ______ rapidly, attracting many international firms.",
+                blank: "booming",
+                options: ["booming", "declining", "stagnating", "shrinking"],
+                correct: 0,
+                definition: "booming = growing or expanding very quickly; thriving",
+                usage: "The tech industry in the city is booming with new startups."
+            },
+            {
+                sentence: "Hainan offers ______ tax rates to enterprises in encouraged industries.",
+                blank: "preferential",
+                options: ["preferential", "ordinary", "higher", "uniform"],
+                correct: 0,
+                definition: "preferential = giving an advantage to a particular group or activity",
+                usage: "The government provides preferential loans to small businesses."
+            },
+            {
+                sentence: "High-tech industries are developed through strategic industrial ______ in digital economy and aerospace.",
+                blank: "clusters",
+                options: ["clusters", "divisions", "branches", "units"],
+                correct: 0,
+                definition: "cluster = a group of similar things or people close together",
+                usage: "Silicon Valley is a famous cluster of tech companies."
+            },
+            {
+                sentence: "The cultivation of tropical fruits and medical plants is supported by Hainan's ______ climate.",
+                blank: "tropical",
+                options: ["tropical", "temperate", "arctic", "continental"],
+                correct: 0,
+                definition: "tropical = relating to the hot, humid region near the equator",
+                usage: "Bananas and pineapples grow well in tropical climates."
+            },
+            {
+                sentence: "The National Seed Breeding Base has contributed to the ______ of over 70% of new crop varieties.",
+                blank: "breeding",
+                options: ["breeding", "gathering", "harvesting", "processing"],
+                correct: 0,
+                definition: "breeding = the activity of producing plants or animals with desired traits",
+                usage: "Selective breeding has improved crop yields significantly."
+            },
+            {
+                sentence: "Yazhou Bay Science and Technology City serves as a core research and ______ platform.",
+                blank: "innovation",
+                options: ["innovation", "imitation", "conservation", "restoration"],
+                correct: 0,
+                definition: "innovation = the introduction of new ideas, methods, or technologies",
+                usage: "The company invests heavily in research and innovation."
+            },
+            {
+                sentence: "The Boao Forum for Asia helps enhance Hainan's international ______ and attracts global investors.",
+                blank: "visibility",
+                options: ["visibility", "competition", "regulation", "intervention"],
+                correct: 0,
+                definition: "visibility = the degree to which something is noticed by the public",
+                usage: "Hosting major events improves a city's global visibility."
+            },
+            {
+                sentence: "The Tour of Hainan cycling race has created distinctive tourism ______ across the island.",
+                blank: "routes",
+                options: ["routes", "destinations", "attractions", "services"],
+                correct: 0,
+                definition: "route = a planned path or way between places",
+                usage: "The scenic route along the coast is popular with tourists."
+            },
+            {
+                sentence: "According to the Master Plan, by 2035, the 15% tax rate will apply to all enterprises on the ______ list.",
+                blank: "negative",
+                options: ["negative", "positive", "exclusive", "inclusive"],
+                correct: 0,
+                definition: "negative list = a list of industries that are excluded from certain benefits",
+                usage: "The government publishes a negative list for foreign investment."
+            }
+        ];
+
+        let current = 0;
+        let score = 0;
+        let answered = false;
+        let completed = false;
+
+        const sentenceEl = document.getElementById('sentenceText');
+        const hintEl = document.getElementById('contextHint');
+        const optionsEl = document.getElementById('optionsContainer');
+        const feedbackEl = document.getElementById('feedbackArea');
+        const nextBtn = document.getElementById('nextBtn');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const progressDisplay = document.getElementById('progressDisplay');
+        const gameArea = document.getElementById('gameArea');
+        const resultArea = document.getElementById('resultArea');
+        const finalScore = document.getElementById('finalScore');
+        const resultMsg = document.getElementById('resultMsg');
+
+        function renderQuestion(index) {
+            const q = questions[index];
+            if (!q) return;
+            // 构建句子：将空白处用特殊标记显示
+            const parts = q.sentence.split('______');
+            if (parts.length === 2) {
+                sentenceEl.innerHTML = `${parts[0]}<span class="blank">__________</span>${parts[1]}`;
+            } else {
+                sentenceEl.textContent = q.sentence;
+            }
+            hintEl.textContent = '💡 Context: ' + q.sentence.replace('______', '_____');
+            // 选项
+            optionsEl.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                const div = document.createElement('div');
+                div.className = 'opt';
+                div.textContent = opt;
+                div.dataset.idx = idx;
+                div.addEventListener('click', () => handleOptionClick(idx));
+                optionsEl.appendChild(div);
+            });
+            feedbackEl.innerHTML = '💡 Select a word to see its definition and usage.';
+            nextBtn.disabled = true;
+            answered = false;
+            progressDisplay.textContent = index + 1;
+            // 清除所有选项样式
+            document.querySelectorAll('.opt').forEach(el => {
+                el.classList.remove('selected-correct', 'selected-wrong', 'show-correct', 'disabled');
+            });
+        }
+
+        function handleOptionClick(selectedIdx) {
+            if (answered) return;
+            const q = questions[current];
+            const opts = document.querySelectorAll('.opt');
+            // 禁用所有选项
+            opts.forEach(el => el.classList.add('disabled'));
+
+            const isCorrect = (selectedIdx === q.correct);
+            if (isCorrect) score += 10;
+
+            // 显示正确与错误
+            opts.forEach((el, idx) => {
+                if (idx === q.correct) {
+                    el.classList.add('show-correct');
+                }
+                if (idx === selectedIdx) {
+                    if (isCorrect) el.classList.add('selected-correct');
+                    else el.classList.add('selected-wrong');
+                }
+            });
+
+            // 反馈信息
+            let feedbackHTML = '';
+            if (isCorrect) {
+                feedbackHTML = `✅ Correct! <strong>"${q.options[q.correct]}"</strong> is the right choice. `;
+            } else {
+                feedbackHTML = `❌ Not quite. The correct word is <strong>"${q.options[q.correct]}"</strong>. `;
+            }
+            feedbackHTML += `<br><span class="def">📖 Definition:</span> ${q.definition}`;
+            feedbackHTML += `<br>📌 <em>Example: ${q.usage}</em>`;
+            feedbackEl.innerHTML = feedbackHTML;
+
+            answered = true;
+            nextBtn.disabled = false;
+            scoreDisplay.textContent = score;
+        }
+
+        function goToNext() {
+            if (nextBtn.disabled) return;
+            if (current < questions.length - 1) {
+                current++;
+                renderQuestion(current);
+                scoreDisplay.textContent = score;
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            gameArea.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+            finalScore.textContent = score + ' / 100';
+            let msg = '';
+            if (score === 100) msg = '🌟 Perfect! You have mastered all the key vocabulary!';
+            else if (score >= 80) msg = '📘 Excellent! Review the ones you missed to reinforce your learning.';
+            else if (score >= 60) msg = '📝 Good effort! Revisit the unit glossary for the tricky words.';
+            else msg = '💪 Keep practicing! Try again and focus on word meanings.';
+            resultMsg.textContent = msg;
+        }
+
+        function resetGame() {
+            current = 0;
+            score = 0;
+            answered = false;
+            completed = false;
+            scoreDisplay.textContent = '0';
+            gameArea.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+            renderQuestion(0);
+        }
+
+        // 事件绑定
+        nextBtn.addEventListener('click', goToNext);
+        document.getElementById('resetBtn').addEventListener('click', resetGame);
+        document.getElementById('playAgainBtn').addEventListener('click', resetGame);
+
+        // 初始化
+        renderQuestion(0);
+    })();
+</script>
+</body>
+</html>
