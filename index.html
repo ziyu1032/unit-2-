@@ -213,6 +213,18 @@
         let answered = false;
         let completed = false;
 
+        /* 洗牌：每局打乱题目顺序，每题打乱选项顺序，正确答案不再固定在第一位 */
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+        let qOrder = [];    // 本轮题目出题顺序（存的是题库索引）
+        let optOrder = [];  // 当前题选项的显示顺序（存的是原始选项索引）
+
         const sentenceEl = document.getElementById('sentenceText');
         const hintEl = document.getElementById('contextHint');
         const optionsEl = document.getElementById('optionsContainer');
@@ -226,7 +238,7 @@
         const resultMsg = document.getElementById('resultMsg');
 
         function renderQuestion(index) {
-            const q = questions[index];
+            const q = questions[qOrder[index]];
             if (!q) return;
             // 构建句子：将空白处用特殊标记显示
             const parts = q.sentence.split('______');
@@ -236,14 +248,15 @@
                 sentenceEl.textContent = q.sentence;
             }
             hintEl.textContent = '💡 Context: ' + q.sentence.replace('______', '_____');
-            // 选项
+            // 选项（每次渲染都随机排序，正确答案位置随机）
             optionsEl.innerHTML = '';
-            q.options.forEach((opt, idx) => {
+            optOrder = shuffle([0, 1, 2, 3]);
+            optOrder.forEach((origIdx) => {
                 const div = document.createElement('div');
                 div.className = 'opt';
-                div.textContent = opt;
-                div.dataset.idx = idx;
-                div.addEventListener('click', () => handleOptionClick(idx));
+                div.textContent = q.options[origIdx];
+                div.dataset.idx = origIdx;
+                div.addEventListener('click', () => handleOptionClick(origIdx));
                 optionsEl.appendChild(div);
             });
             feedbackEl.innerHTML = '💡 Select a word to see its definition and usage.';
@@ -266,8 +279,9 @@
             const isCorrect = (selectedIdx === q.correct);
             if (isCorrect) score += 10;
 
-            // 显示正确与错误
-            opts.forEach((el, idx) => {
+            // 显示正确与错误（按每个选项自身的原始索引判断，与显示顺序无关）
+            opts.forEach((el) => {
+                const idx = Number(el.dataset.idx);
                 if (idx === q.correct) {
                     el.classList.add('show-correct');
                 }
@@ -321,6 +335,7 @@
             score = 0;
             answered = false;
             completed = false;
+            qOrder = shuffle([...questions.keys()]);   // 每次重新开始都打乱出题顺序
             scoreDisplay.textContent = '0';
             gameArea.classList.remove('hidden');
             resultArea.classList.add('hidden');
@@ -332,7 +347,8 @@
         document.getElementById('resetBtn').addEventListener('click', resetGame);
         document.getElementById('playAgainBtn').addEventListener('click', resetGame);
 
-        // 初始化
+        // 初始化（首局同样打乱顺序）
+        qOrder = shuffle([...questions.keys()]);
         renderQuestion(0);
     })();
 </script>
