@@ -271,7 +271,7 @@
 
         function handleOptionClick(selectedIdx) {
             if (answered) return;
-            const q = questions[current];
+            const q = questions[qOrder[current]];   // 与渲染保持同一题（qOrder 为打乱后的出题顺序）
             const opts = document.querySelectorAll('.opt');
             // 禁用所有选项
             opts.forEach(el => el.classList.add('disabled'));
